@@ -334,7 +334,7 @@ int WriteDevice(int vid,int pid,int epin,int epout,char* buff,int len)
 	return 0;
 }
 
-int ControlDevice(int vid,int pid,char requesttype,char request,char value,char index,char* buff,int len)
+int ControlDevice(int vid,int pid,char requesttype,char request,short value,short index,char* buff,int len)
 {
         int rv,length;
 
