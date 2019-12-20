@@ -3,6 +3,7 @@
 #define BULK_ENDPOINT_OUT 2
 #define BULK_ENDPOINT_IN  1
 int ControlDevice(int vid,int pid,char requesttype,char request,short value,short index,char* buff,int len);
+int switchReport(int vid,int pid,unsigned char* buffer,int buffer_size,unsigned char* returnbuffer,int returnbuffer_size);
 
 struct userDevice{
 	/*Device descriptor*/
@@ -123,8 +124,9 @@ int get_device_endpoint(struct libusb_device_descriptor *dev_desc,struct userDev
 
 int main(void)
 {
-	unsigned char buff[6]={0,0,0,0,0,0};
-	int rv=ControlDevice(0x0DD4,0X0237,0XC1,0X10,0X00,0X00,buff,6);
+	unsigned char buff[10]={0xaa,0xaa,0xaa,0x96,0x69,0x00,0x03,0x20,0x01,0x21 };
+        unsigned char retbuff[0x50];
+	int rv=switchReport(0x0400,0Xc35A,buff,10,retbuff,0x40);
 	printf("%d\r\n",rv);
 }
 
@@ -132,27 +134,13 @@ int switchReport(int vid,int pid,unsigned char* buffer,int buffer_size,unsigned 
 {
 	int rv;
         init_libusb();
-        //rv = get_device_descriptor(&dev_desc,&user_device);
-        //if(rv < 0) { printf("*** get_device_descriptor failed! \n");  return -1;}
-        //rv = get_device_endpoint(&dev_desc,&user_device);
-        //if(rv < 0) { printf("*** get_device_endpoint failed! rv:%d \n",rv); return -1;}
         libusb_device_handle* usb_handle = libusb_open_device_with_vid_pid(NULL, vid, pid);
         if(usb_handle == NULL){ printf("*** Permission denied or Can not find the USB Device!\n"); return -1; }
-        rv = libusb_claim_interface(usb_handle,0);
-        if(rv < 0) {
-                rv = libusb_detach_kernel_driver(usb_handle,0);
-                if(rv < 0) { printf("*** libusb_detach_kernel_driver failed! rv%d\n",rv); return -1;}
-                rv = libusb_claim_interface(usb_handle,0);
-                if(rv < 0) { printf("*** libusb_claim_interface failed! rv%d\n",rv); return -1;}
-        }
-	//LIBUSB_ENDPOINT_OUT|LIBUSB_REQUEST_TYPE_CLASS|LIBUSB_RECIPIENT_INTERFACE
-        rv = libusb_control_transfer(usb_handle,0x21,0x09,0x0200,0x00,buffer,buffer_size,1000);
+        rv = libusb_control_transfer(usb_handle,0x21,0x09,0x0301,0x00,buffer,buffer_size,1000);
         if(rv < 0) {printf("*** write failed! %d\n",rv); return -1;}
         rv =libusb_control_transfer(usb_handle,0xA1,0x01,0x0100,0x00,returnbuffer,returnbuffer_size,1000);
         if(rv < 0) {printf("*** read failed! %d\n",rv); return -1;}
         libusb_close(usb_handle);
-        libusb_release_interface(usb_handle,0);
-        //libusb_free_device_list(user_device.devs, 1);
         libusb_exit(NULL);
         return rv;
 }
