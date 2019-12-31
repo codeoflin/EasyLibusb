@@ -121,15 +121,26 @@ int get_device_endpoint(struct libusb_device_descriptor *dev_desc,struct userDev
 	}
 	return -2;  //don't find user device
 }
-
-int main(void)
+void testidcard()
 {
 	unsigned char buff[10]={0xaa,0xaa,0xaa,0x96,0x69,0x00,0x03,0x20,0x01,0x21 };
         unsigned char retbuff[0x50];
 	int rv=switchReport(0x0400,0Xc35A,buff,10,retbuff,0x40);
 	printf("%d\r\n",rv);
+	
 }
 
+void testk80()
+{
+	unsigned char buff[11]={0x1b,0x40,0x1b,0x3c,0x1b,0x33,0x18,0x30,0x31,0x32,0x0A };
+	WriteDevice(0x0DD4,0x0237,buff,11);
+}
+
+int main()
+{
+	testk80();
+	return 0;
+}
 int switchReport(int vid,int pid,unsigned char* buffer,int buffer_size,unsigned char* returnbuffer,int returnbuffer_size)
 {
 	int rv;
@@ -145,7 +156,7 @@ int switchReport(int vid,int pid,unsigned char* buffer,int buffer_size,unsigned 
         return rv;
 }
 
-int WriteDevice(int vid,int pid,int epin,int epout,char* buff,int len)
+int WriteDevice(int vid,int pid,char* buff,int len)
 {
         int rv,length;
         libusb_device_handle* g_usb_handle;
@@ -157,11 +168,13 @@ int WriteDevice(int vid,int pid,int epin,int epout,char* buff,int len)
         user_device.bInterfaceSubClass = LIBUSB_CLASS_PRINTER ;
         user_device.bmAttributes = LIBUSB_TRANSFER_TYPE_BULK ;
         user_device.dev = NULL;
+	//printf("%d %d\n",user_device.bInEndpointAddress,user_device.bOutEndpointAddress);
         init_libusb();
         rv = get_device_descriptor(&dev_desc,&user_device);
         if(rv < 0) { printf("*** get_device_descriptor failed! \n");return -1;}
         rv = get_device_endpoint(&dev_desc,&user_device);
         if(rv < 0) { printf("*** get_device_endpoint failed! rv:%d \n",rv); return -1; }
+	//printf("%d %d\n",user_device.bInEndpointAddress,user_device.bOutEndpointAddress);
         g_usb_handle = libusb_open_device_with_vid_pid(NULL, user_device.idVendor, user_device.idProduct);
         if(g_usb_handle == NULL) {
                 printf("*** Permission denied or Can not find the USB board (Maybe the USB driver has not been installed correctly), quit!\n");
@@ -174,7 +187,7 @@ int WriteDevice(int vid,int pid,int epin,int epout,char* buff,int len)
                 rv = libusb_claim_interface(g_usb_handle,user_device.bInterfaceNumber);
                 if(rv < 0) { printf("*** libusb_claim_interface failed! rv%d\n",rv); return -1;}
         }
-        rv = libusb_bulk_transfer(g_usb_handle,epout,buff,len,&length,1000);
+        rv = libusb_bulk_transfer(g_usb_handle,user_device.bOutEndpointAddress,buff,len,&length,1000);
         if(rv < 0) { printf("*** bulk_transfer failed! \n");return -1; }
         libusb_close(g_usb_handle);
         libusb_release_interface(g_usb_handle,user_device.bInterfaceNumber);
