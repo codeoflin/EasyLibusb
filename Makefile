@@ -2,6 +2,7 @@
 CC	= gcc
 #CFLAGS	= -g -O2             
 TARGET	= libEasyLibusb.so
+TEST	= libEasyLibusb.so
 LIBSPATH = ../lib
 LIBS	= -lusb-1.0
 INC	= /usr/local/include/libusb-1.0
@@ -16,12 +17,14 @@ SRCS = main.c
 OBJS	= $(SRCS:.c=.o)
  
 # Make everything
-all:	$(TARGET) 
+all:	$(TARGET) $(TEST)
  
 # Make the application
-#-lstdc++:编译c++的时候用到
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(EXCHAR) -o $(TARGET) $(OBJS)  $(LIBS)  -shared -fPIC 
+
+$(TEST): $(OBJS)
+	$(CC) $(CFLAGS) $(EXCHAR) -o $(TARGET) $(OBJS)  $(LIBS) 
  
 # Dependencies
 #$@:表示目标文件，即：demo.o
