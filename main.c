@@ -138,7 +138,8 @@ void testk80()
 
 int main()
 {
-	testk80();
+	testidcard();
+	//testk80();
 	return 0;
 }
 int switchReport(int vid,int pid,unsigned char* buffer,int buffer_size,unsigned char* returnbuffer,int returnbuffer_size)
@@ -148,7 +149,10 @@ int switchReport(int vid,int pid,unsigned char* buffer,int buffer_size,unsigned 
         libusb_device_handle* usb_handle = libusb_open_device_with_vid_pid(NULL, vid, pid);
         if(usb_handle == NULL){ printf("*** Permission denied or Can not find the USB Device!\n"); return -1; }
         rv = libusb_control_transfer(usb_handle,0x21,0x09,0x0301,0x00,buffer,buffer_size,1000);
-        if(rv < 0) {printf("*** write failed! %d\n",rv); return -1;}
+        if(rv < 0) {
+		rv = libusb_bulk_transfer(usb_handle,0x21,0x09,0x0301,0x00,buffer,buffer_size,1000);
+		if(rv<0)printf("*** write failed! %d\n",rv); return -1;
+	}
         rv =libusb_control_transfer(usb_handle,0xA1,0x01,0x0100,0x00,returnbuffer,returnbuffer_size,1000);
         if(rv < 0) {printf("*** read failed! %d\n",rv); return -1;}
         libusb_close(usb_handle);
