@@ -4,6 +4,7 @@
 #define BULK_ENDPOINT_IN  1
 int ControlDevice(int vid,int pid,char requesttype,char request,short value,short index,char* buff,int len);
 int switchReport(int vid,int pid,unsigned char* buffer,int buffer_size,unsigned char* returnbuffer,int returnbuffer_size);
+int WriteDevice2(int vid,int pid,char* buff,int len);
 
 struct userDevice{
 	/*Device descriptor*/
@@ -121,7 +122,36 @@ int get_device_endpoint(struct libusb_device_descriptor *dev_desc,struct userDev
 	}
 	return -2;  //don't find user device
 }
-
+ 
+int get_device_endpoint2(struct libusb_device_descriptor *dev_desc,struct userDevice *user_device)
+{
+	int rv = -2;
+	int i,j,k;
+	struct libusb_config_descriptor *conf_desc;
+	u_int8_t isFind = 0;
+	for (i=0; i< dev_desc->bNumConfigurations; i++)
+	{
+		if(user_device->dev != NULL)rv = libusb_get_active_config_descriptor(user_device->dev,&conf_desc);
+		if(rv < 0) {printf("*** libusb_get_config_descriptor failed! \n");return -1;}
+		for (j=0; j< conf_desc->bNumInterfaces; j++)
+		{
+			for (k=0; k < conf_desc->interface[j].num_altsetting; k++)
+			{
+				if(conf_desc->interface[j].altsetting[k].bInterfaceClass==user_device->bInterfaceClass)
+				{
+					if(match_with_endpoint(&(conf_desc->interface[j].altsetting[k] ), user_device ))
+					{
+						user_device->bInterfaceNumber = conf_desc->interface[j].altsetting[k].bInterfaceNumber;
+						libusb_free_config_descriptor(conf_desc);
+						rv = 0;
+						return rv;
+					}
+				}
+			}
+		}
+	}
+	return -2;  //don't find user device
+}
 void testidcard()
 {
 	unsigned char buff[10]={0xaa,0xaa,0xaa,0x96,0x69,0x00,0x03,0x20,0x01,0x21 };
@@ -163,7 +193,7 @@ int switchReportBulk(int vid,int pid,unsigned char* buffer,int buffer_size,unsig
 	int rv;
 	init_libusb();
 
-	rv = WriteDevice(vid,pid,buffer,buffer_size);
+	rv = WriteDevice2(vid,pid,buffer,buffer_size);
 	if(rv<0)printf("*** write failed! %d\n",rv); return -1;
 	/*
 	libusb_device_handle* usb_handle = libusb_open_device_with_vid_pid(NULL, vid, pid);
@@ -176,6 +206,42 @@ int switchReportBulk(int vid,int pid,unsigned char* buffer,int buffer_size,unsig
 	libusb_exit(NULL);
 	// */
 	return rv;
+}
+int WriteDevice2(int vid,int pid,char* buff,int len)
+{
+        int rv,length;
+        libusb_device_handle* g_usb_handle;
+        struct userDevice user_device;
+        struct libusb_device_descriptor dev_desc;
+        user_device.idProduct = pid;
+        user_device.idVendor =  vid;
+        user_device.bInterfaceClass = LIBUSB_CLASS_PRINTER ;
+        user_device.bInterfaceSubClass = LIBUSB_CLASS_PRINTER ;
+        user_device.bmAttributes = LIBUSB_TRANSFER_TYPE_BULK ;
+        user_device.dev = NULL;
+	//printf("%d %d\n",user_device.bInEndpointAddress,user_device.bOutEndpointAddress);
+        init_libusb();
+        rv = get_device_descriptor(&dev_desc,&user_device);
+        if(rv < 0) { printf("*** get_device_descriptor failed! \n");return -1;}
+        rv = get_device_endpoint2(&dev_desc,&user_device);
+        if(rv < 0) { printf("*** get_device_endpoint failed! rv:%d \n",rv); return -1; }
+	//printf("%d %d\n",user_device.bInEndpointAddress,user_device.bOutEndpointAddress);
+        g_usb_handle = libusb_open_device_with_vid_pid(NULL, user_device.idVendor, user_device.idProduct);
+        if(g_usb_handle == NULL) { printf("*** Permission denied or Can not find the USB board (Maybe the USB driver has not been installed correctly), quit!\n");return -1;}
+        rv = libusb_claim_interface(g_usb_handle,user_device.bInterfaceNumber);
+        if(rv < 0) {
+                rv = libusb_detach_kernel_driver(g_usb_handle,user_device.bInterfaceNumber);
+                if(rv < 0) { printf("*** libusb_detach_kernel_driver failed! rv%d\n",rv); return -1;}
+                rv = libusb_claim_interface(g_usb_handle,user_device.bInterfaceNumber);
+                if(rv < 0) { printf("*** libusb_claim_interface failed! rv%d\n",rv); return -1;}
+        }
+        rv = libusb_bulk_transfer(g_usb_handle,user_device.bOutEndpointAddress,buff,len,&length,1000);
+        if(rv < 0) { printf("*** bulk_transfer failed! \n");return -1; }
+        libusb_close(g_usb_handle);
+        libusb_release_interface(g_usb_handle,user_device.bInterfaceNumber);
+        libusb_free_device_list(user_device.devs, 1);
+        libusb_exit(NULL);
+	return 0;
 }
 
 int WriteDevice(int vid,int pid,char* buff,int len)
