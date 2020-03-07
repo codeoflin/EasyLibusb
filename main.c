@@ -120,29 +120,26 @@ int testidcard()
 {
 	int rv = -2, i = 0, j, k,length;
 	ssize_t iret;
+	libusb_context *ctx = NULL;
 	libusb_device **devs;
+	libusb_device_handle *g_usb_handle;
 	struct libusb_config_descriptor conf_desc;
 	struct libusb_device_descriptor dev_desc;
 	struct userDevice user_device;
-	libusb_device_handle *g_usb_handle;
 	u_int8_t isFind = 0;
-	init_libusb();
-	
-	printf("0\r\n");
+	libusb_init(&ctx);
+	libusb_set_debug(ctx, 3);
 	iret = libusb_get_device_list(NULL, &devs);//check the device number
-	if (iret < 0)	return (int)iret;
+	if (iret < 0)
+	{
+		libusb_exit(ctx);
+		return (int)iret;
+	}
 	
-	printf("01\r\n");
 	while ((user_device.dev = devs[i++]) != NULL)
 	{
-		
-		printf("011\r\n");
 		iret = libusb_get_device_descriptor(user_device.dev, &dev_desc);
-		if (iret < 0)
-		{
-			printf("*** libusb_get_device_descriptor failed! i:%d \n", i);
-			return -1;
-		}
+		if (iret < 0)continue;
 		if (dev_desc.idVendor == 0xdd4 && dev_desc.idProduct == 0x237  )
 		{
 			isFind = 1;
@@ -150,7 +147,12 @@ int testidcard()
 		}
 	}
 	
-	if(isFind==0)return -2;
+	if(isFind==0)
+	{
+		libusb_exit(ctx);
+		libusb_free_device_list(devs,1);
+		return -2;
+	}
 	printf("02\r\n");
 	iret=libusb_open(user_device.dev,&g_usb_handle);
 	if(iret<0)
