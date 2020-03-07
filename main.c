@@ -123,7 +123,7 @@ int testidcard()
 	libusb_device **devs;
 	struct libusb_config_descriptor *conf_desc;
 	struct libusb_device_descriptor *dev_desc;
-	struct userDevice *user_device;
+	struct userDevice user_device;
 	libusb_device_handle *g_usb_handle;
 	u_int8_t isFind = 0;
 	init_libusb();
@@ -131,9 +131,9 @@ int testidcard()
 	printf("0\r\n");
 	iret = libusb_get_device_list(NULL, &devs);//check the device number
 	if (iret < 0)	return (int)iret;
-	while ((user_device->dev = devs[i++]) != NULL)
+	while ((user_device.dev = devs[i++]) != NULL)
 	{
-		iret = libusb_get_device_descriptor(user_device->dev, dev_desc);
+		iret = libusb_get_device_descriptor(user_device.dev, dev_desc);
 		if (iret < 0)
 		{
 			printf("*** libusb_get_device_descriptor failed! i:%d \n", i);
@@ -141,29 +141,29 @@ int testidcard()
 		}
 		if (dev_desc->idVendor == 0xdd4 &&dev_desc->idProduct == 0x237  )
 		{
-			rv = 0;
+			isFind = 1;
 			break;
 		}
 	}
 	
 	printf("01\r\n");
-	if(rv!=0)return -2;
+	if(isFind==0)return -2;
 	printf("02\r\n");
-	iret=libusb_open(user_device->dev,g_usb_handle);
+	iret=libusb_open(user_device.dev,g_usb_handle);
 	if(iret<0)
 	{
 		libusb_free_device_list(devs,1);
 		return -2;
 	}
 	printf("1\r\n");
-	libusb_get_config_descriptor(user_device->dev,i,&conf_desc);
+	libusb_get_config_descriptor(user_device.dev,i,&conf_desc);
 	int isdetached=0;
 	if(libusb_kernel_driver_active(g_usb_handle,dev_desc->bNumConfigurations)==1)//?
 	{
 		if(libusb_detach_kernel_driver(g_usb_handle,dev_desc->bNumConfigurations)>=0)isdetached=1;
 	}
 	printf("2\r\n");
-	if(libusb_claim_interface(g_usb_handle, user_device->bInterfaceNumber)>=0)
+	if(libusb_claim_interface(g_usb_handle, user_device.bInterfaceNumber)>=0)
 	{
 		for (i = 0; i < dev_desc->bNumConfigurations; i++)
 		{
@@ -172,22 +172,22 @@ int testidcard()
 				for (k = 0; k < conf_desc->interface[j].num_altsetting; k++)
 				{
 					//枚举找到端点描述符
-					if (conf_desc->interface[j].altsetting[k].bInterfaceClass != user_device->bInterfaceClass)continue;
-					if (!match_with_endpoint(&(conf_desc->interface[j].altsetting[k]), user_device))continue;
-					user_device->bInterfaceNumber = conf_desc->interface[j].altsetting[k].bInterfaceNumber;
+					if (conf_desc->interface[j].altsetting[k].bInterfaceClass != user_device.bInterfaceClass)continue;
+					if (!match_with_endpoint(&(conf_desc->interface[j].altsetting[k]), &user_device))continue;
+					user_device.bInterfaceNumber = conf_desc->interface[j].altsetting[k].bInterfaceNumber;
 					libusb_free_config_descriptor(conf_desc);
 					iret = 0;
 					return rv;
 				}
 		}
 	}
-	printf("3");
+	printf("3\r\n");
 	libusb_free_device_list(devs, 1);
 
 	unsigned char buff[10] = {0xaa, 0xaa, 0xaa, 0x96, 0x69, 0x00, 0x03, 0x20, 0x01, 0x21};
 	unsigned char retbuff[0x50];
 
-	rv = libusb_bulk_transfer(g_usb_handle, user_device->bOutEndpointAddress, buff, 10, &length, 1000);
+	rv = libusb_bulk_transfer(g_usb_handle, user_device.bOutEndpointAddress, buff, 10, &length, 1000);
 	if (rv < 0)
 	{
 		printf("*** bulk_transfer failed! \n");
