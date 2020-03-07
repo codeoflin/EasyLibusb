@@ -1,7 +1,5 @@
 #include <stdio.h>
 #include "libusb.h"
-#define BULK_ENDPOINT_OUT 2
-#define BULK_ENDPOINT_IN 1
 int ControlDevice(int vid, int pid, char requesttype, char request, short value, short index, char *buff, int len);
 int switchReport(int vid, int pid, unsigned char *buffer, int buffer_size, unsigned char *returnbuffer, int returnbuffer_size);
 int WriteDevice2(int vid, int pid, char *buff, int len);
@@ -15,10 +13,10 @@ struct userDevice
 	uint16_t idProduct;
 	/*Interface descriptor*/
 	/** USB-IF class code for this interface. See \ref libusb_class_code. */
-	uint8_t bInterfaceClass;
+	unsigned char bInterfaceClass;
 	/** USB-IF subclass code for this interface, qualified by the
 	 * bInterfaceClass value */
-	uint8_t bInterfaceSubClass;
+	unsigned char bInterfaceSubClass;
 	/*Endpoint descriptor*/
 	/** Attributes which apply to the endpoint when it is configured using
 	 * the bConfigurationValue. Bits 0:1 determine the transfer type and
@@ -27,13 +25,13 @@ struct userDevice
 	 * Bits 4:5 are also only used for isochronous endpoints and correspond to
 	 * \ref libusb_iso_usage_type. Bits 6:7 are reserved.
 	 */
-	uint8_t bmAttributes;
+	unsigned char bmAttributes;
 	/*save parameter*/
 	libusb_device *dev;
-	u_int8_t bInEndpointAddress;
-	u_int8_t bOutEndpointAddress;
+	unsigned char bInEndpointAddress;
+	unsigned char bOutEndpointAddress;
 	/* Number of this interface */
-	uint8_t bInterfaceNumber;
+	unsigned char bInterfaceNumber;
 };
 
 int init_libusb(void)
@@ -55,7 +53,7 @@ int get_device_descriptor(struct libusb_device_descriptor *dev_desc, struct user
 	libusb_device **devs;
 	libusb_device *dev;
 	struct libusb_config_descriptor *conf_desc;
-	u_int8_t isFind = 0;
+	unsigned char isFind = 0;
 	cnt = libusb_get_device_list(NULL, &devs); //check the device number
 	if (cnt < 0)
 		return (int)cnt;
@@ -146,7 +144,7 @@ int testidcard()
 	}
 
 	{ //获取设备描述符.对比vid pid
-		u_int8_t isFound = 0;
+		unsigned char isFound = 0;
 		while ((user_device.dev = devs[i++]) != NULL)
 		{
 			iret = libusb_get_device_descriptor(user_device.dev, &dev_desc);
@@ -179,8 +177,6 @@ int testidcard()
 
 	int isdetached = 0;
 	{ //声明接口
-		libusb_get_config_descriptor(user_device.dev, i, &conf_desc);
-
 		if (libusb_kernel_driver_active(g_usb_handle, 0) == 1) //?
 		{
 			if (libusb_detach_kernel_driver(g_usb_handle, 0) < 0)
@@ -213,6 +209,7 @@ int testidcard()
 	{
 		for (i = 0; i < dev_desc.bNumConfigurations; i++)
 		{
+			libusb_get_config_descriptor(user_device.dev, i, &conf_desc);
 			if (rv < 0)
 			{
 				printf("*** libusb_get_config_descriptor failed! \n");
