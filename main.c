@@ -215,17 +215,20 @@ int testidcard()
 				printf("*** libusb_get_config_descriptor failed! rv=%d\n",rv);
 				return -1;
 			}
+
+			printf("20\r\n");
 			for (j = 0; j < conf_desc.bNumInterfaces; j++)
 				for (k = 0; k < conf_desc.interface[j].num_altsetting; k++)
 				{
-					printf("20\r\n");
+					
+					printf("21\r\n");
 					//枚举找到端点描述符
 					if (conf_desc.interface[j].altsetting[k].bInterfaceClass != user_device.bInterfaceClass)
 						continue;
 					if (!match_with_endpoint(&(conf_desc.interface[j].altsetting[k]), &user_device))
 						continue;
 						
-					printf("21\r\n");
+					printf("22\r\n");
 					user_device.bInterfaceNumber = conf_desc.interface[j].altsetting[k].bInterfaceNumber;
 					libusb_free_config_descriptor(&conf_desc);
 					iret = 0;
