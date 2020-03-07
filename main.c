@@ -140,7 +140,7 @@ int testidcard()
 			printf("*** libusb_get_device_descriptor failed! i:%d \n", i);
 			return -1;
 		}
-		if (dev_desc->idProduct == 0xdd4 && dev_desc->idVendor == 0x237)
+		if (dev_desc->idVendor == 0xdd4 &&dev_desc->idProduct == 0x237  )
 		{
 			user_device->dev = dev;
 			rv = 0;
@@ -148,9 +148,9 @@ int testidcard()
 		}
 	}
 	
-	printf("01\r");
+	printf("01\r\n");
 	if(user_device->dev == NULL)return -2;
-	printf("02\r");
+	printf("02\r\n");
 	iret=libusb_open(dev,g_usb_handle);
 	if(iret<0)
 	{
