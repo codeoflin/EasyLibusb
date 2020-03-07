@@ -121,7 +121,6 @@ int testidcard()
 	int rv = -2, i = 0, j, k,length;
 	ssize_t iret;
 	libusb_device **devs;
-	libusb_device *dev;
 	struct libusb_config_descriptor *conf_desc;
 	struct libusb_device_descriptor *dev_desc;
 	struct userDevice *user_device;
@@ -129,42 +128,41 @@ int testidcard()
 	u_int8_t isFind = 0;
 	init_libusb();
 	
-	printf("0");
+	printf("0\r\n");
 	iret = libusb_get_device_list(NULL, &devs);//check the device number
 	if (iret < 0)	return (int)iret;
-	while ((dev = devs[i++]) != NULL)
+	while ((user_device->dev = devs[i++]) != NULL)
 	{
-		rv = libusb_get_device_descriptor(dev, dev_desc);
-		if (rv < 0)
+		iret = libusb_get_device_descriptor(user_device->dev, dev_desc);
+		if (iret < 0)
 		{
 			printf("*** libusb_get_device_descriptor failed! i:%d \n", i);
 			return -1;
 		}
 		if (dev_desc->idVendor == 0xdd4 &&dev_desc->idProduct == 0x237  )
 		{
-			user_device->dev = dev;
 			rv = 0;
 			break;
 		}
 	}
 	
 	printf("01\r\n");
-	if(user_device->dev == NULL)return -2;
+	if(rv!=0)return -2;
 	printf("02\r\n");
-	iret=libusb_open(dev,g_usb_handle);
+	iret=libusb_open(user_device->dev,g_usb_handle);
 	if(iret<0)
 	{
 		libusb_free_device_list(devs,1);
 		return -2;
 	}
-	printf("1\r");
+	printf("1\r\n");
 	libusb_get_config_descriptor(user_device->dev,i,&conf_desc);
 	int isdetached=0;
 	if(libusb_kernel_driver_active(g_usb_handle,dev_desc->bNumConfigurations)==1)//?
 	{
 		if(libusb_detach_kernel_driver(g_usb_handle,dev_desc->bNumConfigurations)>=0)isdetached=1;
 	}
-	printf("2");
+	printf("2\r\n");
 	if(libusb_claim_interface(g_usb_handle, user_device->bInterfaceNumber)>=0)
 	{
 		for (i = 0; i < dev_desc->bNumConfigurations; i++)
