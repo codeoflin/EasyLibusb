@@ -127,7 +127,7 @@ int testidcard()
 	struct userDevice *user_device;
 	libusb_device_handle *g_usb_handle;
 	u_int8_t isFind = 0;
-	libusb_init();
+	init_libusb();
 	iret = libusb_get_device_list(NULL, &devs);//check the device number
 	if (iret < 0)	return (int)iret;
 	while ((dev = devs[i++]) != NULL)
