@@ -50,12 +50,11 @@ int init_libusb(void)
 
 int get_device_descriptor(struct libusb_device_descriptor *dev_desc, struct userDevice *user_device)
 {
-	int rv = -2, i = 0, j, k;;
+	int rv = -2, i = 0, j, k;
 	ssize_t cnt;
 	libusb_device **devs;
 	libusb_device *dev;
 	struct libusb_config_descriptor *conf_desc;
-	
 	u_int8_t isFind = 0;
 	cnt = libusb_get_device_list(NULL, &devs);//check the device number
 	if (cnt < 0)	return (int)cnt;
@@ -75,21 +74,24 @@ int get_device_descriptor(struct libusb_device_descriptor *dev_desc, struct user
 		}
 	}
 
+	//return 0;
 	for (i = 0; i < dev_desc->bNumConfigurations; i++)
 	{
+		//return 0;
 		for (j = 0; j < conf_desc->bNumInterfaces; j++)
+			//return 0;
 			for (k = 0; k < conf_desc->interface[j].num_altsetting; k++)
 			{
 				//枚举找到端点描述符
 				if (conf_desc->interface[j].altsetting[k].bInterfaceClass != user_device->bInterfaceClass)continue;
 				if (!match_with_endpoint(&(conf_desc->interface[j].altsetting[k]), user_device))continue;
-
 				user_device->bInterfaceNumber = conf_desc->interface[j].altsetting[k].bInterfaceNumber;
 				libusb_free_config_descriptor(conf_desc);
 				rv = 0;
 				return rv;
 			}
 	}
+	//return 0;
 	libusb_free_device_list(devs, 1);
 	return rv;
 }
@@ -192,7 +194,9 @@ int WriteDevice2(int vid, int pid, char *buff, int len)
 	user_device.dev = NULL;
 	//printf("%d %d\n",user_device.bInEndpointAddress,user_device.bOutEndpointAddress);
 	init_libusb();
+	//return 0;
 	rv = get_device_descriptor(&dev_desc, &user_device);
+	return 0;
 	if (rv < 0)
 	{
 		printf("*** get_device_descriptor failed! \n");
