@@ -140,7 +140,7 @@ int testidcard()
 			printf("*** libusb_get_device_descriptor failed! i:%d \n", i);
 			return -1;
 		}
-		if (dev_desc->idProduct == user_device->idProduct && dev_desc->idVendor == user_device->idVendor)
+		if (dev_desc->idProduct == 0xdd4 && dev_desc->idVendor == 0x237)
 		{
 			user_device->dev = dev;
 			rv = 0;
