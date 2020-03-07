@@ -209,6 +209,7 @@ void testk80()
 
 int main()
 {
+	printf("000");
 	testidcard();
 	//testk80();
 	return 0;
