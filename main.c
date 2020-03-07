@@ -73,11 +73,12 @@ int get_device_descriptor(struct libusb_device_descriptor *dev_desc, struct user
 			break;
 		}
 	}
-	if(user_device->dev != NULL)rv = libusb_get_config_descriptor(user_device->dev,i,&conf_desc);
-	if(rv < 0) {printf("*** libusb_get_config_descriptor failed! \n");return -1;}
+
 	//return 0;
 	for (i = 0; i < dev_desc->bNumConfigurations; i++)
 	{
+		if(user_device->dev != NULL)rv = libusb_get_config_descriptor(user_device->dev,i,&conf_desc);
+		if(rv < 0) {printf("*** libusb_get_config_descriptor failed! \n");return -1;}
 		for (j = 0; j < conf_desc->bNumInterfaces; j++)
 			for (k = 0; k < conf_desc->interface[j].num_altsetting; k++)
 			{
@@ -195,7 +196,6 @@ int WriteDevice2(int vid, int pid, char *buff, int len)
 	init_libusb();
 	//return 0;
 	rv = get_device_descriptor(&dev_desc, &user_device);
-	return 0;
 	if (rv < 0)
 	{
 		printf("*** get_device_descriptor failed! \n");
