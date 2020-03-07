@@ -130,7 +130,7 @@ int testidcard()
 	libusb_context *ctx = NULL;
 	libusb_device **devs;
 	libusb_device_handle *g_usb_handle;				 //设备句柄
-	struct libusb_config_descriptor conf_desc; //配置描述符
+	struct libusb_config_descriptor *conf_desc; //配置描述符
 	struct libusb_device_descriptor dev_desc;	//设备描述符
 	struct userDevice user_device;
 
@@ -217,23 +217,25 @@ int testidcard()
 			}
 
 			printf("20\r\n");
-			for (j = 0; j < conf_desc.bNumInterfaces; j++)
-				for (k = 0; k < conf_desc.interface[j].num_altsetting; k++)
+			for (j = 0; j < conf_desc->bNumInterfaces; j++)
+			{
+				for (k = 0; k < conf_desc->interface[j].num_altsetting; k++)
 				{
 					
 					printf("21\r\n");
 					//枚举找到端点描述符
-					if (conf_desc.interface[j].altsetting[k].bInterfaceClass != user_device.bInterfaceClass)
+					if (conf_desc->interface[j].altsetting[k].bInterfaceClass != user_device.bInterfaceClass)
 						continue;
-					if (!match_with_endpoint(&(conf_desc.interface[j].altsetting[k]), &user_device))
+					if (!match_with_endpoint(&(conf_desc->interface[j].altsetting[k]), &user_device))
 						continue;
 						
 					printf("22\r\n");
-					user_device.bInterfaceNumber = conf_desc.interface[j].altsetting[k].bInterfaceNumber;
+					user_device.bInterfaceNumber = conf_desc->interface[j].altsetting[k].bInterfaceNumber;
 					libusb_free_config_descriptor(&conf_desc);
 					iret = 0;
 					return rv;
 				}
+			}
 		}
 	}
 	printf("3\r\n");
