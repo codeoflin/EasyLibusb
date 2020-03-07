@@ -159,24 +159,24 @@ int testidcard()
 	printf("1\r\n");
 	libusb_get_config_descriptor(user_device.dev,i,&conf_desc);
 	int isdetached=0;
-	if(libusb_kernel_driver_active(g_usb_handle,dev_desc->bNumConfigurations)==1)//?
+	if(libusb_kernel_driver_active(g_usb_handle,dev_desc.bNumConfigurations)==1)//?
 	{
-		if(libusb_detach_kernel_driver(g_usb_handle,dev_desc->bNumConfigurations)>=0)isdetached=1;
+		if(libusb_detach_kernel_driver(g_usb_handle,dev_desc.bNumConfigurations)>=0)isdetached=1;
 	}
 	printf("2\r\n");
 	if(libusb_claim_interface(g_usb_handle, user_device.bInterfaceNumber)>=0)
 	{
-		for (i = 0; i < dev_desc->bNumConfigurations; i++)
+		for (i = 0; i < dev_desc.bNumConfigurations; i++)
 		{
 			if(rv < 0) {printf("*** libusb_get_config_descriptor failed! \n");return -1;}
-			for (j = 0; j < conf_desc->bNumInterfaces; j++)
-				for (k = 0; k < conf_desc->interface[j].num_altsetting; k++)
+			for (j = 0; j < conf_desc.bNumInterfaces; j++)
+				for (k = 0; k < conf_desc.interface[j].num_altsetting; k++)
 				{
 					//枚举找到端点描述符
-					if (conf_desc->interface[j].altsetting[k].bInterfaceClass != user_device.bInterfaceClass)continue;
-					if (!match_with_endpoint(&(conf_desc->interface[j].altsetting[k]), &user_device))continue;
-					user_device.bInterfaceNumber = conf_desc->interface[j].altsetting[k].bInterfaceNumber;
-					libusb_free_config_descriptor(conf_desc);
+					if (conf_desc.interface[j].altsetting[k].bInterfaceClass != user_device.bInterfaceClass)continue;
+					if (!match_with_endpoint(&(conf_desc.interface[j].altsetting[k]), &user_device))continue;
+					user_device.bInterfaceNumber = conf_desc.interface[j].altsetting[k].bInterfaceNumber;
+					libusb_free_config_descriptor(&conf_desc);
 					iret = 0;
 					return rv;
 				}
