@@ -116,12 +116,83 @@ int match_with_endpoint(const struct libusb_interface_descriptor *interface, str
 	return (ret == 3 ? 1 : 0);
 }
 
-void testidcard()
+int testidcard()
 {
+	int rv = -2, i = 0, j, k,length;
+	ssize_t iret;
+	libusb_device **devs;
+	libusb_device *dev;
+	struct libusb_config_descriptor *conf_desc;
+	struct libusb_device_descriptor *dev_desc;
+	struct userDevice *user_device;
+	libusb_device_handle *g_usb_handle;
+	u_int8_t isFind = 0;
+	iret = libusb_get_device_list(NULL, &devs);//check the device number
+	if (iret < 0)	return (int)iret;
+	while ((dev = devs[i++]) != NULL)
+	{
+		rv = libusb_get_device_descriptor(dev, dev_desc);
+		if (rv < 0)
+		{
+			printf("*** libusb_get_device_descriptor failed! i:%d \n", i);
+			return -1;
+		}
+		if (dev_desc->idProduct == user_device->idProduct && dev_desc->idVendor == user_device->idVendor)
+		{
+			user_device->dev = dev;
+			rv = 0;
+			break;
+		}
+	}
+	if(user_device->dev == NULL)return -2;
+	iret=libusb_open(dev,g_usb_handle);
+	if(iret<0)
+	{
+		libusb_free_device_list(devs,1);
+		return -2;
+	}
+	libusb_get_config_descriptor(user_device->dev,i,&conf_desc);
+	int isdetached=0;
+	if(libusb_kernel_driver_active(g_usb_handle,dev_desc->bNumConfigurations)==1)//?
+	{
+		if(libusb_detach_kernel_driver(g_usb_handle,dev_desc->bNumConfigurations)>=0)isdetached=1;
+	}
+
+	if(libusb_claim_interface(g_usb_handle, user_device->bInterfaceNumber)>=0)
+	{
+		for (i = 0; i < dev_desc->bNumConfigurations; i++)
+		{
+			if(rv < 0) {printf("*** libusb_get_config_descriptor failed! \n");return -1;}
+			for (j = 0; j < conf_desc->bNumInterfaces; j++)
+				for (k = 0; k < conf_desc->interface[j].num_altsetting; k++)
+				{
+					//枚举找到端点描述符
+					if (conf_desc->interface[j].altsetting[k].bInterfaceClass != user_device->bInterfaceClass)continue;
+					if (!match_with_endpoint(&(conf_desc->interface[j].altsetting[k]), user_device))continue;
+					user_device->bInterfaceNumber = conf_desc->interface[j].altsetting[k].bInterfaceNumber;
+					libusb_free_config_descriptor(conf_desc);
+					iret = 0;
+					return rv;
+				}
+		}
+	}
+
+	libusb_free_device_list(devs, 1);
+
 	unsigned char buff[10] = {0xaa, 0xaa, 0xaa, 0x96, 0x69, 0x00, 0x03, 0x20, 0x01, 0x21};
 	unsigned char retbuff[0x50];
-	int rv = switchReportBulk(0x0400, 0Xc35A, buff, 10, retbuff, 0x40);
+
+	rv = libusb_bulk_transfer(g_usb_handle, user_device->bOutEndpointAddress, buff, 10, &length, 1000);
+	if (rv < 0)
+	{
+		printf("*** bulk_transfer failed! \n");
+		return -1;
+	}
+
+	//int rv = switchReportBulk(0x0400, 0Xc35A, buff, 10, retbuff, 0x40);
+
 	printf("%d\r\n", rv);
+	return 0;
 }
 
 void testk80()
@@ -164,7 +235,6 @@ int switchReport(int vid, int pid, unsigned char *buffer, int buffer_size, unsig
 int switchReportBulk(int vid, int pid, unsigned char *buffer, int buffer_size, unsigned char *returnbuffer, int returnbuffer_size)
 {
 	int rv;
-	init_libusb();
 	rv = WriteDevice2(vid, pid, buffer, buffer_size);
 	if (rv < 0)	printf("*** write failed! %d\n", rv);
 	return 0;
