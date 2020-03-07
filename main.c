@@ -135,6 +135,8 @@ int testidcard()
 	printf("01\r\n");
 	while ((user_device.dev = devs[i++]) != NULL)
 	{
+		
+		printf("011\r\n");
 		iret = libusb_get_device_descriptor(user_device.dev, &dev_desc);
 		if (iret < 0)
 		{
