@@ -208,11 +208,6 @@ int WriteDevice2(int vid, int pid, char *buff, int len)
 		printf("*** Permission denied or Can not find the USB board (Maybe the USB driver has not been installed correctly), quit!\n");
 		return -1;
 	}
-	if(libusb_kernel_driver_active(g_usb_handle,user_device.bInterfaceNumber)==1)
-	{
-		libusb_detach_kernel_driver(g_usb_handle,user_device.bInterfaceNumber);
-	}
-
 
 	rv = libusb_claim_interface(g_usb_handle, user_device.bInterfaceNumber);
 	if (rv < 0)
