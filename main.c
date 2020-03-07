@@ -152,7 +152,7 @@ int testidcard()
 	
 	if(isFind==0)return -2;
 	printf("02\r\n");
-	iret=libusb_open(user_device.dev,g_usb_handle);
+	iret=libusb_open(user_device.dev,&g_usb_handle);
 	if(iret<0)
 	{
 		libusb_free_device_list(devs,1);
@@ -161,12 +161,12 @@ int testidcard()
 	printf("1\r\n");
 	libusb_get_config_descriptor(user_device.dev,i,&conf_desc);
 	int isdetached=0;
-	if(libusb_kernel_driver_active(g_usb_handle,dev_desc.bNumConfigurations)==1)//?
+	if(libusb_kernel_driver_active(&g_usb_handle,dev_desc.bNumConfigurations)==1)//?
 	{
-		if(libusb_detach_kernel_driver(g_usb_handle,dev_desc.bNumConfigurations)>=0)isdetached=1;
+		if(libusb_detach_kernel_driver(&g_usb_handle,dev_desc.bNumConfigurations)>=0)isdetached=1;
 	}
 	printf("2\r\n");
-	if(libusb_claim_interface(g_usb_handle, user_device.bInterfaceNumber)>=0)
+	if(libusb_claim_interface(&g_usb_handle, user_device.bInterfaceNumber)>=0)
 	{
 		for (i = 0; i < dev_desc.bNumConfigurations; i++)
 		{
@@ -190,7 +190,7 @@ int testidcard()
 	unsigned char buff[10] = {0xaa, 0xaa, 0xaa, 0x96, 0x69, 0x00, 0x03, 0x20, 0x01, 0x21};
 	unsigned char retbuff[0x50];
 
-	rv = libusb_bulk_transfer(g_usb_handle, user_device.bOutEndpointAddress, buff, 10, &length, 1000);
+	rv = libusb_bulk_transfer(&g_usb_handle, user_device.bOutEndpointAddress, buff, 10, &length, 1000);
 	if (rv < 0)
 	{
 		printf("*** bulk_transfer failed! \n");
