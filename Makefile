@@ -2,7 +2,7 @@
 CC	= gcc
 #CFLAGS	= -g -O2             
 TARGET	= libEasyLibusb.so
-TEST	= libEasyLibusb.so
+TEST	= test.elf
 LIBSPATH = ../lib
 LIBS	= -lusb-1.0
 INC	= /usr/local/include/libusb-1.0
