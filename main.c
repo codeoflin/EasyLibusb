@@ -148,15 +148,16 @@ int testidcard()
 		}
 	}
 	
-	printf("01");
+	printf("01\r");
 	if(user_device->dev == NULL)return -2;
+	printf("02\r");
 	iret=libusb_open(dev,g_usb_handle);
 	if(iret<0)
 	{
 		libusb_free_device_list(devs,1);
 		return -2;
 	}
-	printf("1");
+	printf("1\r");
 	libusb_get_config_descriptor(user_device->dev,i,&conf_desc);
 	int isdetached=0;
 	if(libusb_kernel_driver_active(g_usb_handle,dev_desc->bNumConfigurations)==1)//?
