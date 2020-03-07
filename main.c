@@ -121,8 +121,8 @@ int testidcard()
 	int rv = -2, i = 0, j, k,length;
 	ssize_t iret;
 	libusb_device **devs;
-	struct libusb_config_descriptor *conf_desc;
-	struct libusb_device_descriptor *dev_desc;
+	struct libusb_config_descriptor conf_desc;
+	struct libusb_device_descriptor dev_desc;
 	struct userDevice user_device;
 	libusb_device_handle *g_usb_handle;
 	u_int8_t isFind = 0;
@@ -135,13 +135,13 @@ int testidcard()
 	printf("01\r\n");
 	while ((user_device.dev = devs[i++]) != NULL)
 	{
-		iret = libusb_get_device_descriptor(user_device.dev, dev_desc);
+		iret = libusb_get_device_descriptor(user_device.dev, &dev_desc);
 		if (iret < 0)
 		{
 			printf("*** libusb_get_device_descriptor failed! i:%d \n", i);
 			return -1;
 		}
-		if (dev_desc->idVendor == 0xdd4 &&dev_desc->idProduct == 0x237  )
+		if (dev_desc.idVendor == 0xdd4 && dev_desc.idProduct == 0x237  )
 		{
 			isFind = 1;
 			break;
