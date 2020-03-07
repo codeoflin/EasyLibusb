@@ -209,10 +209,10 @@ int testidcard()
 	{
 		for (i = 0; i < dev_desc.bNumConfigurations; i++)
 		{
-			libusb_get_config_descriptor(user_device.dev, i, &conf_desc);
+			rv=libusb_get_config_descriptor(user_device.dev, i, &conf_desc);
 			if (rv < 0)
 			{
-				printf("*** libusb_get_config_descriptor failed! \n");
+				printf("*** libusb_get_config_descriptor failed! rv=%d\n",rv);
 				return -1;
 			}
 			for (j = 0; j < conf_desc.bNumInterfaces; j++)
