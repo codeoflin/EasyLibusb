@@ -128,6 +128,8 @@ int testidcard()
 	libusb_device_handle *g_usb_handle;
 	u_int8_t isFind = 0;
 	init_libusb();
+	
+	printf("0");
 	iret = libusb_get_device_list(NULL, &devs);//check the device number
 	if (iret < 0)	return (int)iret;
 	while ((dev = devs[i++]) != NULL)
@@ -145,6 +147,8 @@ int testidcard()
 			break;
 		}
 	}
+	
+	printf("01");
 	if(user_device->dev == NULL)return -2;
 	iret=libusb_open(dev,g_usb_handle);
 	if(iret<0)
