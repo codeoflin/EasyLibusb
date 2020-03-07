@@ -129,9 +129,10 @@ int testidcard()
 	ssize_t iret;
 	libusb_context *ctx = NULL;
 	libusb_device **devs;
-	libusb_device_handle *g_usb_handle;				 //设备句柄
+	libusb_device_handle *g_usb_handle;					//设备句柄
 	struct libusb_config_descriptor *conf_desc; //配置描述符
-	struct libusb_device_descriptor dev_desc;	//设备描述符
+	struct libusb_device_descriptor dev_desc;		//设备描述符
+	struct libusb_interface_descriptor *interface;
 	struct userDevice user_device;
 
 	libusb_init(&ctx);
@@ -165,78 +166,90 @@ int testidcard()
 		}
 	}
 
-	//打开设备
-	iret = libusb_open(user_device.dev, &g_usb_handle);
-	if (iret < 0)
-	{
-		libusb_free_device_list(devs, 1);
-		libusb_exit(ctx);
-		return -2;
-	}
-	printf("1\r\n");
-
-	int isdetached = 0;
-	{ //声明接口
-		if (libusb_kernel_driver_active(g_usb_handle, 0) == 1) //?
+	{ //打开设备
+		iret = libusb_open(user_device.dev, &g_usb_handle);
+		if (iret < 0)
 		{
-			if (libusb_detach_kernel_driver(g_usb_handle, 0) < 0)
-			{
-				libusb_free_device_list(devs, 1);
-				libusb_exit(ctx);
-				return -3;
-			}
-			isdetached = 1;
+			libusb_free_device_list(devs, 1);
+			libusb_exit(ctx);
+			return -2;
 		}
-		if (libusb_claim_interface(g_usb_handle, 0) < 0)
-		{
-			if (libusb_detach_kernel_driver(g_usb_handle, 0) < 0)
+		printf("1\r\n");
+
+		int isdetached = 0;
+		{																												 //声明接口
+			if (libusb_kernel_driver_active(g_usb_handle, 0) == 1) //?
 			{
-				libusb_free_device_list(devs, 1);
-				libusb_exit(ctx);
-				return -3;
+				if (libusb_detach_kernel_driver(g_usb_handle, 0) < 0)
+				{
+					libusb_free_device_list(devs, 1);
+					libusb_exit(ctx);
+					return -3;
+				}
+				isdetached = 1;
 			}
-			isdetached = 1;
 			if (libusb_claim_interface(g_usb_handle, 0) < 0)
 			{
-				libusb_free_device_list(devs, 1);
-				libusb_exit(ctx);
-				return -3;
+				if (libusb_detach_kernel_driver(g_usb_handle, 0) < 0)
+				{
+					libusb_free_device_list(devs, 1);
+					libusb_exit(ctx);
+					return -3;
+				}
+				isdetached = 1;
+				if (libusb_claim_interface(g_usb_handle, 0) < 0)
+				{
+					libusb_free_device_list(devs, 1);
+					libusb_exit(ctx);
+					return -3;
+				}
 			}
 		}
 	}
 	printf("2\r\n");
 
 	{
+		//枚举设备有多少个配置描述符
 		for (i = 0; i < dev_desc.bNumConfigurations; i++)
 		{
-			rv=libusb_get_config_descriptor(user_device.dev, i, &conf_desc);
-			if (rv < 0)
-			{
-				printf("*** libusb_get_config_descriptor failed! rv=%d\n",rv);
-				return -1;
-			}
-
+			//读取配置描述符
+			if (libusb_get_config_descriptor(user_device.dev, i, &conf_desc) < 0)	continue;
 			printf("20\r\n");
+			iret = 0;
+			// 此配置所支持的接口数量
 			for (j = 0; j < conf_desc->bNumInterfaces; j++)
 			{
+				// 根据接口的设置数量枚举
 				for (k = 0; k < conf_desc->interface[j].num_altsetting; k++)
 				{
-					
 					printf("21\r\n");
 					//枚举找到端点描述符
-					if (conf_desc->interface[j].altsetting[k].bInterfaceClass != user_device.bInterfaceClass)
-						continue;
-					if (!match_with_endpoint(&(conf_desc->interface[j].altsetting[k]), &user_device))
-						continue;
-						
-					printf("22\r\n");
+					for (i = 0; i < interface->bNumEndpoints; i++)
+					{
+						if ((interface->endpoint[i].bmAttributes & LIBUSB_TRANSFER_TYPE_BULK) ==0) continue;//判断是否支持指定类型的传输方式
+						if (interface->endpoint[i].bEndpointAddress & 0x80) //out endpoint & in endpoint
+						{
+							iret |= 1;
+							user_device.bInEndpointAddress = interface->endpoint[i].bEndpointAddress;
+							printf("211\r\n");
+						}
+						else
+						{
+							iret |= 2;
+							user_device.bOutEndpointAddress = interface->endpoint[i].bEndpointAddress;
+							printf("212\r\n");
+						}
+					}
 					user_device.bInterfaceNumber = conf_desc->interface[j].altsetting[k].bInterfaceNumber;
-					libusb_free_config_descriptor(&conf_desc);
-					iret = 0;
-					return rv;
 				}
 			}
 		}
+	}
+	if (iret != 3)
+	{
+		libusb_free_device_list(devs, 1);
+		libusb_exit(ctx);
+		return -3;
 	}
 	printf("3\r\n");
 	libusb_free_device_list(devs, 1);
