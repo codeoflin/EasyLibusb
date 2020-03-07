@@ -125,14 +125,14 @@ int match_with_endpoint(const struct libusb_interface_descriptor *interface, str
 
 int testidcard()
 {
-	int rv = -2, i = 0, j, k, length;
+	int rv = -2, i = 0, j, k,l, length;
 	ssize_t iret;
 	libusb_context *ctx = NULL;
 	libusb_device **devs;
 	libusb_device_handle *g_usb_handle;					//设备句柄
 	struct libusb_config_descriptor *conf_desc; //配置描述符
 	struct libusb_device_descriptor dev_desc;		//设备描述符
-	struct libusb_interface_descriptor *interface;
+	struct libusb_interface_descriptor interface;
 	struct userDevice user_device;
 
 	libusb_init(&ctx);
@@ -223,24 +223,25 @@ int testidcard()
 				for (k = 0; k < conf_desc->interface[j].num_altsetting; k++)
 				{
 					printf("21\r\n");
+					interface=conf_desc->interface[j].altsetting[k];
 					//枚举找到端点描述符
-					for (i = 0; i < interface->bNumEndpoints; i++)
+					for (l = 0; l < interface.bNumEndpoints; l++)
 					{
-						if ((interface->endpoint[i].bmAttributes & LIBUSB_TRANSFER_TYPE_BULK) ==0) continue;//判断是否支持指定类型的传输方式
-						if (interface->endpoint[i].bEndpointAddress & 0x80) //out endpoint & in endpoint
+						if ((interface.endpoint[l].bmAttributes & LIBUSB_TRANSFER_TYPE_BULK) ==0) continue;//判断是否支持指定类型的传输方式
+						if (interface.endpoint[l].bEndpointAddress & 0x80) //out endpoint & in endpoint
 						{
 							iret |= 1;
-							user_device.bInEndpointAddress = interface->endpoint[i].bEndpointAddress;
+							user_device.bInEndpointAddress = interface.endpoint[l].bEndpointAddress;
 							printf("211\r\n");
 						}
 						else
 						{
 							iret |= 2;
-							user_device.bOutEndpointAddress = interface->endpoint[i].bEndpointAddress;
+							user_device.bOutEndpointAddress = interface.endpoint[l].bEndpointAddress;
 							printf("212\r\n");
 						}
 					}
-					user_device.bInterfaceNumber = conf_desc->interface[j].altsetting[k].bInterfaceNumber;
+					user_device.bInterfaceNumber = interface.bInterfaceNumber;
 				}
 			}
 		}
