@@ -124,7 +124,7 @@ int match_with_endpoint(const struct libusb_interface_descriptor *interface, str
 
 int testidcard()
 {
-	int rv = -2, i = 0, j, k,l, length;
+	int rv = -2, i = 0, j, k, l, length;
 	ssize_t iret;
 	libusb_context *ctx = NULL;
 	libusb_device **devs;
@@ -135,7 +135,7 @@ int testidcard()
 	struct userDevice user_device;
 
 	libusb_init(&ctx);
-	libusb_set_debug(ctx, 4);
+	//libusb_set_debug(ctx, 4);
 	iret = libusb_get_device_list(NULL, &devs); //check the device number
 	if (iret < 0)
 	{
@@ -210,7 +210,8 @@ int testidcard()
 		for (i = 0; i < dev_desc.bNumConfigurations; i++)
 		{
 			//读取配置描述符
-			if (libusb_get_config_descriptor(user_device.dev, i, &conf_desc) < 0)	continue;
+			if (libusb_get_config_descriptor(user_device.dev, i, &conf_desc) < 0)
+				continue;
 			iret = 0;
 			// 此配置所支持的接口数量
 			for (j = 0; j < conf_desc->bNumInterfaces; j++)
@@ -218,11 +219,12 @@ int testidcard()
 				// 根据接口的设置数量枚举
 				for (k = 0; k < conf_desc->interface[j].num_altsetting; k++)
 				{
-					interface=conf_desc->interface[j].altsetting[k];
+					interface = conf_desc->interface[j].altsetting[k];
 					//枚举找到端点描述符
 					for (l = 0; l < interface.bNumEndpoints; l++)
 					{
-						if ((interface.endpoint[l].bmAttributes & LIBUSB_TRANSFER_TYPE_BULK) ==0) continue;//判断是否支持指定类型的传输方式
+						if ((interface.endpoint[l].bmAttributes & LIBUSB_TRANSFER_TYPE_BULK) == 0)
+							continue;																				 //判断是否支持指定类型的传输方式
 						if (interface.endpoint[l].bEndpointAddress & 0x80) //out endpoint & in endpoint
 						{
 							iret |= 1;
@@ -241,9 +243,9 @@ int testidcard()
 		}
 	}
 
-	if(isdetached==1)
+	if (isdetached == 1)
 	{
-		libusb_attach_kernel_driver(g_usb_handle,0);
+		libusb_attach_kernel_driver(g_usb_handle, 0);
 	}
 	if (iret != 3)
 	{
@@ -265,14 +267,14 @@ int testidcard()
 		libusb_exit(ctx);
 		return -1;
 	}
-	
+
 	printf("writed\r\n");
 	rv = libusb_bulk_transfer(g_usb_handle, user_device.bInEndpointAddress, buff, 64, &length, 100);
 	libusb_close(g_usb_handle);
 	//int rv = switchReportBulk(0x0400, 0Xc35A, buff, 10, retbuff, 0x40);
 	if (rv < 0)
 	{
-		printf("*** bulk_transfer recv failed! rv=%s\n",libusb_error_name(rv));
+		printf("*** bulk_transfer recv failed! rv=%s\n", libusb_error_name(rv));
 		libusb_exit(ctx);
 		return -1;
 	}
@@ -324,21 +326,176 @@ int switchReport(int vid, int pid, unsigned char *buffer, int buffer_size, unsig
 
 int switchReportBulk(int vid, int pid, unsigned char *buffer, int buffer_size, unsigned char *returnbuffer, int returnbuffer_size)
 {
-	int rv;
-	//rv = WriteDevice2(vid, pid, buffer, buffer_size);
+	int rv = -2, i = 0, j, k, l, length;
+	ssize_t iret;
+	libusb_context *ctx = NULL;
+	libusb_device **devs;
+	libusb_device_handle *g_usb_handle;					//设备句柄
+	struct libusb_config_descriptor *conf_desc; //配置描述符
+	struct libusb_device_descriptor dev_desc;		//设备描述符
+	struct libusb_interface_descriptor interface;
+	struct userDevice user_device;
+
+	libusb_init(&ctx);
+	//libusb_set_debug(ctx, 4);
+	iret = libusb_get_device_list(NULL, &devs); //check the device number
+	if (iret < 0)
+	{
+		libusb_exit(ctx);
+		return (int)iret;
+	}
+
+	{ //获取设备描述符.对比vid pid
+		unsigned char isFound = 0;
+		while ((user_device.dev = devs[i++]) != NULL)
+		{
+			iret = libusb_get_device_descriptor(user_device.dev, &dev_desc);
+			if (iret < 0)
+				continue;
+			if (dev_desc.idVendor == 0x400 && dev_desc.idProduct == 0xC35A)
+			{
+				isFound = 1;
+				break;
+			}
+		}
+
+		if (isFound == 0)
+		{
+			libusb_exit(ctx);
+			libusb_free_device_list(devs, 1);
+			return -2;
+		}
+	}
+	libusb_free_device_list(devs, 1);
+
+	int isdetached = 0;
+	{ //打开设备
+		iret = libusb_open(user_device.dev, &g_usb_handle);
+		if (iret < 0)
+		{
+			libusb_exit(ctx);
+			return -2;
+		}
+
+		{																												 //声明接口
+			if (libusb_kernel_driver_active(g_usb_handle, 0) == 1) //?
+			{
+				if (libusb_detach_kernel_driver(g_usb_handle, 0) < 0)
+				{
+					libusb_close(g_usb_handle);
+					libusb_exit(ctx);
+					return -3;
+				}
+				isdetached = 1;
+			}
+			if (libusb_claim_interface(g_usb_handle, 0) < 0)
+			{
+				if (libusb_detach_kernel_driver(g_usb_handle, 0) < 0)
+				{
+					libusb_close(g_usb_handle);
+					libusb_exit(ctx);
+					return -3;
+				}
+				isdetached = 1;
+				if (libusb_claim_interface(g_usb_handle, 0) < 0)
+				{
+					libusb_close(g_usb_handle);
+					libusb_exit(ctx);
+					return -3;
+				}
+			}
+		}
+	}
+
+	{ //声明接口
+		//枚举设备有多少个配置描述符
+		for (i = 0; i < dev_desc.bNumConfigurations; i++)
+		{
+			//读取配置描述符
+			if (libusb_get_config_descriptor(user_device.dev, i, &conf_desc) < 0)
+				continue;
+			iret = 0;
+			// 此配置所支持的接口数量
+			for (j = 0; j < conf_desc->bNumInterfaces; j++)
+			{
+				// 根据接口的设置数量枚举
+				for (k = 0; k < conf_desc->interface[j].num_altsetting; k++)
+				{
+					interface = conf_desc->interface[j].altsetting[k];
+					//枚举找到端点描述符
+					for (l = 0; l < interface.bNumEndpoints; l++)
+					{
+						if ((interface.endpoint[l].bmAttributes & LIBUSB_TRANSFER_TYPE_BULK) == 0)
+							continue;																				 //判断是否支持指定类型的传输方式
+						if (interface.endpoint[l].bEndpointAddress & 0x80) //out endpoint & in endpoint
+						{
+							iret |= 1;
+							user_device.bInEndpointAddress = interface.endpoint[l].bEndpointAddress;
+						}
+						else
+						{
+							iret |= 2;
+							user_device.bOutEndpointAddress = interface.endpoint[l].bEndpointAddress;
+						}
+					}
+					user_device.bInterfaceNumber = interface.bInterfaceNumber;
+				}
+			}
+			libusb_free_config_descriptor(conf_desc);
+		}
+	}
+
+	if (isdetached == 1)
+		libusb_attach_kernel_driver(g_usb_handle, 0);
+
+	if (iret != 3)
+	{
+		printf("*** endpoint not enough! \n");
+		libusb_close(g_usb_handle);
+		libusb_exit(ctx);
+		return -3;
+	}
+	printf("3\r\n");
+
+	unsigned char buff[512] = {0xaa, 0xaa, 0xaa, 0x96, 0x69, 0x00, 0x03, 0x20, 0x01, 0x21};
+	unsigned char retbuff[0x50];
+
+	rv = libusb_bulk_transfer(g_usb_handle, user_device.bOutEndpointAddress, buff, 10, &length, 1000);
 	if (rv < 0)
-		printf("*** write failed! %d\n", rv);
-	return 0;
-	/*
-	libusb_device_handle* usb_handle = libusb_open_device_with_vid_pid(NULL, vid, pid);
-	if(usb_handle == NULL){ printf("*** Permission denied or Can not find the USB Device!\n"); return -1; }
-	rv = libusb_bulk_transfer(usb_handle,0x21,0x09,0x0301,0x00,buffer,buffer_size,1000);
-	if(rv<0)printf("*** write failed! %d\n",rv); return -1;
-	rv =libusb_control_transfer(usb_handle,0xA1,0x01,0x0100,0x00,returnbuffer,returnbuffer_size,1000);
-	if(rv < 0) {printf("*** read failed! %d\n",rv); return -1;}
-	libusb_close(usb_handle);
-	libusb_exit(NULL);
-	// */
+	{
+		printf("*** bulk_transfer failed! \n");
+		libusb_close(g_usb_handle);
+		libusb_exit(ctx);
+		return -1;
+	}
+
+	printf("writed\r\n");
+
+	rv = libusb_bulk_transfer(g_usb_handle, user_device.bInEndpointAddress, returnbuffer, 64, &length, 100);
+	libusb_close(g_usb_handle);
+	//int rv = switchReportBulk(0x0400, 0Xc35A, buff, 10, retbuff, 0x40);
+	if (rv <= 0)
+	{
+		printf("*** bulk_transfer recv failed! rv=%s\n", libusb_error_name(rv));
+		libusb_exit(ctx);
+		return -1;
+	}
+	returnbuffer_size = (returnbuffer[5] * 0x100) + returnbuffer[6] + 5;
+	for (i = length; i < returnbuffer_size;)
+	{
+		rv = libusb_bulk_transfer(g_usb_handle, user_device.bInEndpointAddress, &(returnbuffer[i]), 64, &length, 100);
+		if (rv <= 0)
+		{
+			printf("*** bulk_transfer recv failed! rv=%s\n", libusb_error_name(rv));
+			libusb_exit(ctx);
+			return -1;
+		}
+		i += length;
+	}
+	printf("%d\r\n", length);
+	printf("%d\r\n", buff[0]);
+
+	libusb_exit(ctx);
 	return rv;
 }
 
