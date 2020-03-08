@@ -301,7 +301,7 @@ int switchReportBulk(int vid, int pid, unsigned char *buffer, int buffer_size, u
 		libusb_exit(ctx);
 		return -3;
 	}
-	printf("3\r\n");
+	//printf("3\r\n");
 
 	unsigned char buff[512] = {0xaa, 0xaa, 0xaa, 0x96, 0x69, 0x00, 0x03, 0x20, 0x01, 0x21};
 	unsigned char retbuff[0x50];
@@ -337,8 +337,8 @@ int switchReportBulk(int vid, int pid, unsigned char *buffer, int buffer_size, u
 		}
 		i += length;
 	}
-	printf("%d\r\n", length);
-	printf("%d\r\n", returnbuffer_size);
+	
+	printf("%d %d\r\n",length, returnbuffer_size);
 
 	libusb_exit(ctx);
 	return rv;
