@@ -469,7 +469,7 @@ int switchReportBulk(int vid, int pid, unsigned char *buffer, int buffer_size, u
 		return -1;
 	}
 
-	printf("writed\r\n");
+	//printf("writed\r\n");
 
 	rv = libusb_bulk_transfer(g_usb_handle, user_device.bInEndpointAddress, returnbuffer, 64, &length, 100);
 	libusb_close(g_usb_handle);
@@ -493,7 +493,7 @@ int switchReportBulk(int vid, int pid, unsigned char *buffer, int buffer_size, u
 		i += length;
 	}
 	printf("%d\r\n", length);
-	printf("%d\r\n", buff[0]);
+	printf("%d\r\n", returnbuffer_size);
 
 	libusb_exit(ctx);
 	return rv;
