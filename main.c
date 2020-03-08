@@ -261,7 +261,7 @@ int testidcard()
 		libusb_exit(ctx);
 		return -1;
 	}
-	rv = libusb_bulk_transfer(g_usb_handle, user_device.bInEndpointAddress, buff, 512, &length, 1000);
+	rv = libusb_bulk_transfer(g_usb_handle, user_device.bInEndpointAddress, buff, 64, &length, 1000);
 	libusb_close(g_usb_handle);
 	//int rv = switchReportBulk(0x0400, 0Xc35A, buff, 10, retbuff, 0x40);
 	if (rv < 0)
@@ -334,63 +334,6 @@ int switchReportBulk(int vid, int pid, unsigned char *buffer, int buffer_size, u
 	libusb_exit(NULL);
 	// */
 	return rv;
-}
-int WriteDevice2(int vid, int pid, char *buff, int len)
-{
-	int rv, length;
-	libusb_device_handle *g_usb_handle;
-	struct userDevice user_device;
-	struct libusb_device_descriptor dev_desc;
-	user_device.idProduct = pid;
-	user_device.idVendor = vid;
-	user_device.bInterfaceClass = LIBUSB_CLASS_PRINTER;
-	user_device.bInterfaceSubClass = LIBUSB_CLASS_PRINTER;
-	user_device.bmAttributes = LIBUSB_TRANSFER_TYPE_BULK;
-	user_device.dev = NULL;
-	//printf("%d %d\n",user_device.bInEndpointAddress,user_device.bOutEndpointAddress);
-	init_libusb();
-	//return 0;
-	rv = get_device_descriptor(&dev_desc, &user_device);
-	if (rv < 0)
-	{
-		printf("*** get_device_descriptor failed! \n");
-		return -1;
-	}
-	//printf("%d %d\n",user_device.bInEndpointAddress,user_device.bOutEndpointAddress);
-	g_usb_handle = libusb_open_device_with_vid_pid(NULL, user_device.idVendor, user_device.idProduct);
-	if (g_usb_handle == NULL)
-	{
-		printf("*** Permission denied or Can not find the USB board (Maybe the USB driver has not been installed correctly), quit!\n");
-		return -1;
-	}
-
-	rv = libusb_claim_interface(g_usb_handle, user_device.bInterfaceNumber);
-	if (rv < 0)
-	{
-		rv = libusb_detach_kernel_driver(g_usb_handle, user_device.bInterfaceNumber);
-		if (rv < 0)
-		{
-			printf("*** libusb_detach_kernel_driver failed! rv%d\n", rv);
-			return -1;
-		}
-		rv = libusb_claim_interface(g_usb_handle, user_device.bInterfaceNumber);
-		if (rv < 0)
-		{
-			printf("*** libusb_claim_interface failed! rv%d\n", rv);
-			return -1;
-		}
-	}
-	libusb_attach_kernel_driver(g_usb_handle, user_device.bInterfaceNumber);
-	rv = libusb_bulk_transfer(g_usb_handle, user_device.bOutEndpointAddress, buff, len, &length, 1000);
-	if (rv < 0)
-	{
-		printf("*** bulk_transfer failed! \n");
-		return -1;
-	}
-	libusb_close(g_usb_handle);
-	libusb_release_interface(g_usb_handle, user_device.bInterfaceNumber);
-	libusb_exit(NULL);
-	return 0;
 }
 
 int WriteDevice(int vid, int pid, char *buff, int len)
@@ -512,6 +455,7 @@ int ControlDevice(int vid, int pid, char requesttype, char request, short value,
 	if (g_usb_handle == NULL)
 	{
 		printf("*** Permission denied or Can not find the USB board (Maybe the USB driver has not been installed correctly), quit!\n");
+		libusb_exit(NULL);
 		return -1;
 	}
 	rv = libusb_control_transfer(g_usb_handle, requesttype, request, value, index, buff, len, 1000);
