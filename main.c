@@ -166,6 +166,7 @@ int testidcard()
 	}
 	libusb_free_device_list(devs, 1);
 
+	int isdetached = 0;
 	{ //打开设备
 		iret = libusb_open(user_device.dev, &g_usb_handle);
 		if (iret < 0)
@@ -174,7 +175,6 @@ int testidcard()
 			return -2;
 		}
 
-		int isdetached = 0;
 		{																												 //声明接口
 			if (libusb_kernel_driver_active(g_usb_handle, 0) == 1) //?
 			{
@@ -205,7 +205,7 @@ int testidcard()
 		}
 	}
 
-	{
+	{ //声明接口
 		//枚举设备有多少个配置描述符
 		for (i = 0; i < dev_desc.bNumConfigurations; i++)
 		{
@@ -237,9 +237,14 @@ int testidcard()
 					user_device.bInterfaceNumber = interface.bInterfaceNumber;
 				}
 			}
+			libusb_free_config_descriptor();
 		}
 	}
 
+	if(isdetached==1)
+	{
+		libusb_attach_kernel_driver(g_usb_handle,0);
+	}
 	if (iret != 3)
 	{
 		printf("*** endpoint not enough! \n");
