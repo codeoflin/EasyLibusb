@@ -170,7 +170,7 @@ int switchReport(int vid, int pid, unsigned char *buffer, int buffer_size, unsig
 	return rv;
 }
 
-int switchReportBulk(int vid, int pid, unsigned char *buffer, int buffer_size, unsigned char *returnbuffer, int returnbuffer_size)
+int switchReportBulk(int vid, int pid, unsigned char *buffer, int buffer_size, unsigned char *returnbuffer, int* returnbuffer_size)
 {
 	int rv = -2, i = 0, j, k, l, length;
 	ssize_t iret;
@@ -303,10 +303,7 @@ int switchReportBulk(int vid, int pid, unsigned char *buffer, int buffer_size, u
 	}
 	//printf("3\r\n");
 
-	unsigned char buff[512] = {0xaa, 0xaa, 0xaa, 0x96, 0x69, 0x00, 0x03, 0x20, 0x01, 0x21};
-	unsigned char retbuff[0x50];
-
-	rv = libusb_bulk_transfer(g_usb_handle, user_device.bOutEndpointAddress, buff, 10, &length, 1000);
+	rv = libusb_bulk_transfer(g_usb_handle, user_device.bOutEndpointAddress, buffer, buffer_size, &length, 1000);
 	if (rv < 0)
 	{
 		printf("*** bulk_transfer failed! \n");
@@ -337,7 +334,7 @@ int switchReportBulk(int vid, int pid, unsigned char *buffer, int buffer_size, u
 		}
 		i += length;
 	}
-	
+
 	printf("%d %d\r\n",length, returnbuffer_size);
 
 	libusb_exit(ctx);
