@@ -2,7 +2,6 @@
 #include "libusb.h"
 int ControlDevice(int vid, int pid, char requesttype, char request, short value, short index, char *buff, int len);
 int switchReport(int vid, int pid, unsigned char *buffer, int buffer_size, unsigned char *returnbuffer, int returnbuffer_size);
-int WriteDevice2(int vid, int pid, char *buff, int len);
 
 struct userDevice
 {
@@ -319,7 +318,7 @@ int switchReport(int vid, int pid, unsigned char *buffer, int buffer_size, unsig
 int switchReportBulk(int vid, int pid, unsigned char *buffer, int buffer_size, unsigned char *returnbuffer, int returnbuffer_size)
 {
 	int rv;
-	rv = WriteDevice2(vid, pid, buffer, buffer_size);
+	//rv = WriteDevice2(vid, pid, buffer, buffer_size);
 	if (rv < 0)
 		printf("*** write failed! %d\n", rv);
 	return 0;
