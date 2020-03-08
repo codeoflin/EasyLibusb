@@ -135,7 +135,7 @@ int testidcard()
 	struct userDevice user_device;
 
 	libusb_init(&ctx);
-	libusb_set_debug(ctx, 5);
+	libusb_set_debug(ctx, 4);
 	iret = libusb_get_device_list(NULL, &devs); //check the device number
 	if (iret < 0)
 	{
@@ -267,7 +267,7 @@ int testidcard()
 	}
 	
 	printf("writed\r\n");
-	rv = libusb_bulk_transfer(g_usb_handle, user_device.bInEndpointAddress, buff, 64, &length, 0);
+	rv = libusb_bulk_transfer(g_usb_handle, user_device.bInEndpointAddress, buff, 1, &length, 0);
 	libusb_close(g_usb_handle);
 	//int rv = switchReportBulk(0x0400, 0Xc35A, buff, 10, retbuff, 0x40);
 	if (rv < 0)
