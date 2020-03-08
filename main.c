@@ -266,7 +266,7 @@ int testidcard()
 	//int rv = switchReportBulk(0x0400, 0Xc35A, buff, 10, retbuff, 0x40);
 	if (rv < 0)
 	{
-		printf("*** bulk_transfer recv failed! rv=%d\n",rv);
+		printf("*** bulk_transfer recv failed! rv=%s\n",libusb_error_name(rv));
 		libusb_exit(ctx);
 		return -1;
 	}
