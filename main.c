@@ -150,7 +150,7 @@ int testidcard()
 			iret = libusb_get_device_descriptor(user_device.dev, &dev_desc);
 			if (iret < 0)
 				continue;
-			if (dev_desc.idVendor == 0xdd4 && dev_desc.idProduct == 0x237)
+			if (dev_desc.idVendor == 0x400 && dev_desc.idProduct == 0xC35A)
 			{
 				isFound = 1;
 				break;
