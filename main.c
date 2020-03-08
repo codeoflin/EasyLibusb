@@ -266,7 +266,7 @@ int testidcard()
 		return -1;
 	}
 	
-	printf("write\r\n");
+	printf("writed\r\n");
 	rv = libusb_bulk_transfer(g_usb_handle, user_device.bInEndpointAddress, buff, 64, &length, 2000);
 	libusb_close(g_usb_handle);
 	//int rv = switchReportBulk(0x0400, 0Xc35A, buff, 10, retbuff, 0x40);
