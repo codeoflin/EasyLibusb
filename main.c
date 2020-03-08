@@ -470,11 +470,10 @@ int switchReportBulk(int vid, int pid, unsigned char *buffer, int buffer_size, u
 	}
 
 	//printf("writed\r\n");
-
 	rv = libusb_bulk_transfer(g_usb_handle, user_device.bInEndpointAddress, returnbuffer, 64, &length, 100);
 	libusb_close(g_usb_handle);
 	//int rv = switchReportBulk(0x0400, 0Xc35A, buff, 10, retbuff, 0x40);
-	if (rv <= 0)
+	if (rv < 0)
 	{
 		printf("*** bulk_transfer recv failed! rv=%s\n", libusb_error_name(rv));
 		libusb_exit(ctx);
@@ -484,7 +483,7 @@ int switchReportBulk(int vid, int pid, unsigned char *buffer, int buffer_size, u
 	for (i = length; i < returnbuffer_size;)
 	{
 		rv = libusb_bulk_transfer(g_usb_handle, user_device.bInEndpointAddress, &(returnbuffer[i]), 64, &length, 100);
-		if (rv <= 0)
+		if (rv < 0)
 		{
 			printf("*** bulk_transfer recv failed! rv=%s\n", libusb_error_name(rv));
 			libusb_exit(ctx);
