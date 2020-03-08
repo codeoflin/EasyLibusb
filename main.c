@@ -237,7 +237,7 @@ int testidcard()
 					user_device.bInterfaceNumber = interface.bInterfaceNumber;
 				}
 			}
-			libusb_free_config_descriptor();
+			libusb_free_config_descriptor(conf_desc);
 		}
 	}
 
