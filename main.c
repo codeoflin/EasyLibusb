@@ -174,7 +174,6 @@ int testidcard()
 			libusb_exit(ctx);
 			return -2;
 		}
-		printf("1\r\n");
 
 		int isdetached = 0;
 		{																												 //声明接口
@@ -206,7 +205,6 @@ int testidcard()
 			}
 		}
 	}
-	printf("2\r\n");
 
 	{
 		//枚举设备有多少个配置描述符
@@ -268,7 +266,7 @@ int testidcard()
 	//int rv = switchReportBulk(0x0400, 0Xc35A, buff, 10, retbuff, 0x40);
 	if (rv < 0)
 	{
-		printf("*** bulk_transfer recv failed! \n");
+		printf("*** bulk_transfer recv failed! rv=%d\n",rv);
 		libusb_exit(ctx);
 		return -1;
 	}
