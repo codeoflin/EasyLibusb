@@ -323,6 +323,7 @@ int switchReportBulk(int vid, int pid, unsigned char *buffer, int buffer_size, u
 		return -1;
 	}
 	returnbuffer_size = (returnbuffer[5] * 0x100) + returnbuffer[6] + 5;
+	printf("returnbuffer_size(回包长度)= %d\r\n",returnbuffer_size);
 	for (i = length; i <= returnbuffer_size;)
 	{
 		rv = libusb_bulk_transfer(g_usb_handle, user_device.bInEndpointAddress, &(returnbuffer[i]), 64, &length, 100);
