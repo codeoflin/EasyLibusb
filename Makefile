@@ -31,7 +31,7 @@ $(TEST): $(OBJS)
 #$<：表示依赖文件，即：demo.c
 #-I$(INC) :指向包含了的.h文件的路径 即wbe,h的路径
 $(OBJS): %.o: %.c 
-	$(CC) -c $(CFLAGS) $(EXCHAR) -o $@ $< -I$(INC)  
+	$(CC) -c $(CFLAGS) $(EXCHAR) -o $@ $< -I$(INC) -fPIC
 #
 # Clean all object files...
 #
