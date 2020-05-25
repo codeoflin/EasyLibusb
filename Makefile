@@ -24,7 +24,7 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(EXCHAR) -o $(TARGET) $(OBJS)  $(LIBS)  -shared -fPIC 
 
 $(TEST): $(OBJS)
-	$(CC) $(SRCS) -o $(TEST) $(LIBS)
+	$(CC) $(SRCS) -o $(TEST) $(LIBS) -ggdb3
  
 # Dependencies
 #$@:表示目标文件，即：demo.o
